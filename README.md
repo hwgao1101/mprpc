@@ -11,7 +11,7 @@ This project is a distributed RPC communication framework based on the powerful 
 1. Linux System environment：ubuntu20.04
 2. Build high-performance, reliable server applications：[boost库 + muduo库](https://blog.csdn.net/m0_46392035/article/details/124502811)
 3. For data serialization and deserialization in C++：[protobuf](https://github.com/protocolbuffers/protobuf)
-4. 分布式协调服务：[zookeeper](https://blog.csdn.net/weixin_43559950/article/details/118890904)
+4. Distributed coordination service：[zookeeper](https://blog.csdn.net/weixin_43559950/article/details/118890904)
 
 ## Feature points
 1. Use the muduo network library to implement high-concurrency RPC synchronous call request processing
