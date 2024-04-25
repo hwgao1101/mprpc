@@ -47,7 +47,7 @@ void RpcProvider::Run()
     muduo::net::InetAddress address(ip, port);
 
     // 创建TcpServer对象
-    muduo::net::TcpServer server(&m_eventLoop, address, "RpcProvider");
+    muduo::net::TcpServer server(&m_eventLoop, address, "RpcProvider");//用TCP进行传输的，RPC服务器用来倾听来自指定IP地址和端口的客户端连接，以便客户端能够连接到该服务器
 
     // 绑定连接回调和消息读写回调方法  分离了网络代码和业务代码
     server.setConnectionCallback(std::bind(&RpcProvider::OnConnection, this, std::placeholders::_1));
@@ -66,15 +66,15 @@ void RpcProvider::Run()
     {
         // /service_name   /UserServiceRpc
         std::string service_path = "/" + sp.first;
-        zkCli.Create(service_path.c_str(), nullptr, 0);
+        zkCli.Create(service_path.c_str(), nullptr, 0);//创建一个永久性的节点
         for (auto &mp : sp.second.m_methodMap)
         {
             // /service_name/method_name   /UserServiceRpc/Login 存储当前这个rpc服务节点主机的ip和port
             std::string method_path = service_path + "/" + mp.first;
             char method_path_data[128] = {0};
-            sprintf(method_path_data, "%s:%d", ip.c_str(), port);
+            sprintf(method_path_data, "%s:%d", ip.c_str(), port);//把ip地址和端口号存进去
             // ZOO_EPHEMERAL表示znode是一个临时性节点
-            zkCli.Create(method_path.c_str(), method_path_data, strlen(method_path_data), ZOO_EPHEMERAL);
+            zkCli.Create(method_path.c_str(), method_path_data, strlen(method_path_data), ZOO_EPHEMERAL);//ZOO_EPHEMERAL参数表示创建的是一个临时性的节点
         }
     }
 
@@ -83,7 +83,7 @@ void RpcProvider::Run()
 
     // 启动网络服务
     server.start();
-    m_eventLoop.loop(); 
+    m_eventLoop.loop(); //
 }
 
 // 新的socket连接回调
@@ -151,7 +151,7 @@ void RpcProvider::OnMessage(const muduo::net::TcpConnectionPtr &conn,
     std::cout << "args_str: " << args_str << std::endl; 
     std::cout << "============================================" << std::endl;
 
-    // 获取service对象和method对象
+    // 获取service对象和method对象（这里是根据已经获取到的RPC的参数，在RPCProvider类中维护的map表中查找相对应的函数）
     auto it = m_serviceMap.find(service_name);
     if (it == m_serviceMap.end())
     {

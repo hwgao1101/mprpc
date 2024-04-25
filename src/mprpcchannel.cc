@@ -12,6 +12,9 @@
 #include "zookeeperutil.h"
 
 /*
+MpRPCChannel 继承自RPCChannel(protobuf提供的纯虚函数)RpcChannel本质上是用于客户端与服务端之间交互的一条通道，其负责实现客户端与服务端之间交互的一条通道，
+其负责实现客户端向服务端请求时的一些数据和网络的处理。
+
 header_size + service_name method_name args_size + args
 */
 // 所有通过stub代理对象调用的rpc方法，都走到这里了，统一做rpc方法调用的数据数据序列化和网络发送 
@@ -72,7 +75,8 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     std::cout << "============================================" << std::endl;
 
     // 使用tcp编程，完成rpc方法的远程调用
-    int clientfd = socket(AF_INET, SOCK_STREAM, 0);
+    //这里是在C++中创建一个TCP的套接字，并检查创建过程中是否发生错误
+    int clientfd = socket(AF_INET, SOCK_STREAM, 0);//使用socket函数来创建一个套接字，AF_INET： 表示使用IPv4地址簇;SOCK_STREAM：表示创建一个面向流的套接字，这通常用于TCP连接；0 ： 通常用于指定协议，在这里设置为0,意味着使用默认的协议，对于SOCK_STREAM套接字通常是TCP
     if (-1 == clientfd)
     {
         char errtxt[512] = {0};
@@ -105,10 +109,11 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     std::string ip = host_data.substr(0, idx);
     uint16_t port = atoi(host_data.substr(idx+1, host_data.size()-idx).c_str()); 
 
-    struct sockaddr_in server_addr;
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(port);
-    server_addr.sin_addr.s_addr = inet_addr(ip.c_str());
+    //下面的代码是C++中用于设置一个TCP/IP网络连接的服务器地址结构体的常见做法
+    struct sockaddr_in server_addr; //定一个了一个sockaddr_in结构体变量，sockaddr_in是sockaddr中用于IPv4地址的成员，它包含了用于进行网络通线的地址信息。
+    server_addr.sin_family = AF_INET; //sin_family字段指定了地址簇，这里使用的AF_INET表示使用的是IPv4地址
+    server_addr.sin_port = htons(port); //用于设置端口号， htons函数是“host to network short”的缩写，它将16位主机字节序的整数转换为网络字节序（大端序）。
+    server_addr.sin_addr.s_addr = inet_addr(ip.c_str()); //inet_addr函数将传入的IP地址字符串（如"127.0.0.1"）转换为网络字节序的整数值
 
     // 连接rpc服务节点
     if (-1 == connect(clientfd, (struct sockaddr*)&server_addr, sizeof(server_addr)))
@@ -133,9 +138,9 @@ void MprpcChannel::CallMethod(const google::protobuf::MethodDescriptor* method,
     // 接收rpc请求的响应值
     char recv_buf[1024] = {0};
     int recv_size = 0;
-    if (-1 == (recv_size = recv(clientfd, recv_buf, 1024, 0)))
+    if (-1 == (recv_size = recv(clientfd, recv_buf, 1024, 0)))//调用recv函数接收数据，返回值为-1表示接收失败
     {
-        close(clientfd);
+        close(clientfd);//如果接收失败，先关闭这个套接字
         char errtxt[512] = {0};
         sprintf(errtxt, "recv error! errno:%d", errno);
         controller->SetFailed(errtxt);
